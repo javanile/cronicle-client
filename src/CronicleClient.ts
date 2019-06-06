@@ -99,6 +99,11 @@ export class CronicleClient<Categories extends string = BaseCategories,
         return this._executeRequest('get_job_status', HttpMethods.GET, req);
     }
 
+    public getJobLog<Plugin extends keyof Plugins = any>(
+      req: IGetJobStatusRequest): Promise<IGetJobStatusResponse<Plugin, Plugins, Targets, Categories>> {
+        return this._executeRequest('get_job_log', HttpMethods.GET, req);
+    }
+
     public runEvent<Plugin extends keyof Plugins = any>(
         req: IRunEventRequest<Plugin, Plugins, Targets, Categories>): Promise<IRunEventResponse> {
         return this._executeRequest('run_event', HttpMethods.POST, req);
@@ -129,7 +134,7 @@ export class CronicleClient<Categories extends string = BaseCategories,
                                                       bodyOrQuery?: IBodyOrQuery): Promise<T> {
         return Promise.resolve(request(this._buildRequest(operation, httpMethod, bodyOrQuery)))
             .then((response: T | IErrorResponse) => {
-                if (response.code !== 0) {
+                if (operation !== 'get_job_log' && response.code !== 0) {
                     return Promise.reject(new CronicleError(response as IErrorResponse));
                 }
                 return Promise.resolve(response as T);
@@ -141,8 +146,9 @@ export class CronicleClient<Categories extends string = BaseCategories,
             url: this._getMethodUrl(operation, httpMethod === HttpMethods.GET ? bodyOrQuery : undefined),
             method: httpMethod,
             body: httpMethod === HttpMethods.GET ? undefined : bodyOrQuery,
-            json: true,
+            json: operation !== 'get_job_log',
             headers: this._headers,
+            gzip: operation === 'get_job_log',
         };
     }
 
